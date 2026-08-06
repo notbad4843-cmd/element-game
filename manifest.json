@@ -1,0 +1,17 @@
+{
+  "name": "별을 따는 원소술사",
+  "short_name": "원소술사",
+  "description": "중학생 수준의 원소 기호 학습용 웹 게임",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#090a0f",
+  "theme_color": "#090a0f",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "192x192 512x512 any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
