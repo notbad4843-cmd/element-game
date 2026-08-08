@@ -1,4 +1,4 @@
-const CACHE_NAME = 'element-game-v5';
+const CACHE_NAME = 'element-game-v7';
 const urlsToCache = [
   './',
   './index.html',
