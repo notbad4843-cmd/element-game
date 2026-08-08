@@ -1,12 +1,11 @@
-<!DOCTYPE html>
+import os
+
+html_content = """<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>원소술사 아카데미 (원소 게임 모음)</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet">
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#090a0f">
     <style>
@@ -31,7 +30,7 @@
             background-color: var(--bg-color);
             background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
             color: var(--text-main);
-            font-family: 'Gowun Dodum', 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             overflow: hidden; /* Prevent scrolling */
             touch-action: none;
         }
@@ -98,11 +97,6 @@
             background: rgba(255, 100, 150, 0.2);
             border-color: rgba(255, 100, 150, 0.5);
         }
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            pointer-events: none;
-        }
 
         .input-field {
             padding: 10px 20px;
@@ -117,32 +111,12 @@
             width: 250px;
             backdrop-filter: blur(5px);
         }
+        .input-field::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
         .input-field:focus {
             border-color: rgba(0, 150, 255, 0.8);
             box-shadow: var(--accent-glow);
-        }
-
-        .home-btn {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            font-size: 1.5rem;
-            cursor: pointer;
-            z-index: 100;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(5px);
-            transition: all 0.3s;
-        }
-        .home-btn:hover {
-            background: rgba(255,255,255,0.2);
-            transform: scale(1.1);
         }
 
         /* Game 1 UI (Falling Stars) */
@@ -197,7 +171,7 @@
             transform: scale(0.9) !important;
         }
 
-        /* Panels */
+        /* Result & Panels */
         .panel {
             background: rgba(0, 0, 0, 0.6);
             border: 1px solid rgba(255,255,255,0.2);
@@ -210,13 +184,17 @@
             backdrop-filter: blur(10px);
             text-align: center;
         }
+        .panel::-webkit-scrollbar { width: 8px; }
+        .panel::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
+        .panel::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
+
         .correct-list { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
         .correct-item { background: rgba(76, 175, 80, 0.2); border: 1px solid #4CAF50; padding: 5px 10px; border-radius: 20px; font-size: 0.9rem; }
         .wrong-item { background: rgba(244, 67, 54, 0.2); border: 1px solid #F44336; padding: 5px 10px; border-radius: 20px; font-size: 0.9rem; }
 
         /* Hall of Fame */
         #hof-content { padding: 20px; background: linear-gradient(135deg, #1a1a2e, #16213e); border-radius: 10px; }
-        #hof-content h2 { color: #FFD700; text-shadow: 0 0 10px rgba(255,215,0,0.5); margin-bottom: 20px;}
+        #hof-content h2 { color: #FFD700; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
         .rank-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-bottom: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; font-size: 1.2rem; text-align: left; }
         .rank-1 { border: 2px solid var(--gold); box-shadow: 0 0 15px rgba(255,215,0,0.3); }
         .rank-2 { border: 2px solid var(--silver); }
@@ -239,23 +217,20 @@
             z-index: 10;
         }
         #game2-stage-info {
-            font-size: 1.8rem;
+            font-size: 2rem;
             font-weight: bold;
             color: #FFD700;
             text-shadow: 0 0 10px rgba(255,215,0,0.8);
         }
-        #game2-timer {
-            font-size: 1.5rem;
-            color: #00e5ff;
-            font-family: monospace;
+        #game2-matches-info {
+            font-size: 1.2rem;
+            color: #fff;
             margin-top: 5px;
-            text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
         }
-        
         .memory-grid-container {
             width: 100%;
             height: 100%;
-            padding: 110px 10px 10px 10px;
+            padding: 100px 20px 20px 20px;
             box-sizing: border-box;
             display: flex;
             justify-content: center;
@@ -265,73 +240,58 @@
             display: grid;
             gap: 10px;
             width: 100%;
-            height: 100%;
-            max-width: 800px;
-            max-height: calc(100vh - 130px);
+            max-width: 600px;
             perspective: 1000px;
         }
-        .memory-grid.cols-4.rows-3 { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr); }
-        .memory-grid.cols-4.rows-4 { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); }
-        .memory-grid.cols-6.rows-4 { grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(4, 1fr); }
-
-        .memory-card-wrapper {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            height: 100%;
-        }
+        .memory-grid.cols-4 { grid-template-columns: repeat(4, 1fr); max-width: 400px; }
+        .memory-grid.cols-5 { grid-template-columns: repeat(5, 1fr); max-width: 500px; }
+        .memory-grid.cols-6 { grid-template-columns: repeat(6, 1fr); max-width: 600px; }
 
         .memory-card {
             width: 100%;
-            height: 100%;
-            aspect-ratio: 1/1; /* Square cards */
-            max-width: 130px;
-            max-height: 130px;
+            aspect-ratio: 3/4;
             position: relative;
             transform-style: preserve-3d;
-            transition: transform 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+            transition: transform 0.5s;
             cursor: pointer;
         }
         .memory-card.flipped { transform: rotateY(180deg); }
-        
         .memory-card-front, .memory-card-back {
             position: absolute;
             width: 100%;
             height: 100%;
             backface-visibility: hidden;
-            border-radius: 12px;
+            border-radius: 8px;
             display: flex;
             justify-content: center;
             align-items: center;
             box-sizing: border-box;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
             text-align: center;
             word-break: keep-all;
         }
         .memory-card-back {
             background: linear-gradient(135deg, #1e3c72, #2a5298);
             border: 2px solid #5a7b9c;
-            font-size: 2.5rem;
+            font-size: 2rem;
             color: rgba(255,255,255,0.2);
         }
-        .memory-card-back::after { content: '🃏'; }
-        
+        .memory-card-back::after { content: '★'; }
         .memory-card-front {
             background: linear-gradient(135deg, #fff, #f0f0f0);
             color: #111;
             transform: rotateY(180deg);
             border: 2px solid #fff;
             font-weight: bold;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             padding: 5px;
         }
         .memory-card-front.symbol {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             color: #e91e63;
         }
         .memory-card-front.name {
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             color: #1976d2;
         }
         .memory-card-front.matched {
@@ -341,16 +301,6 @@
         }
         .memory-card-front.matched.symbol, .memory-card-front.matched.name {
             color: white;
-        }
-
-        /* Hint mode */
-        .hint-mode .memory-card-back.type-symbol {
-            border-color: #ff80ab;
-            box-shadow: inset 0 0 15px rgba(233, 30, 99, 0.5);
-        }
-        .hint-mode .memory-card-back.type-name {
-            border-color: #82b1ff;
-            box-shadow: inset 0 0 15px rgba(25, 118, 210, 0.5);
         }
 
         /* Main Menu Layout */
@@ -380,55 +330,15 @@
         .game-card.g1:hover { border-color: rgba(0, 150, 255, 0.8); box-shadow: 0 0 15px rgba(0, 150, 255, 0.5); }
         .game-card.g2:hover { border-color: rgba(255, 100, 150, 0.8); box-shadow: 0 0 15px rgba(255, 100, 150, 0.5); }
 
-        .tab-container {
-            display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;
-        }
-        .tab-btn {
-            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: #fff;
-            padding: 10px 20px; border-radius: 20px; cursor: pointer; transition: 0.3s;
-        }
-        .tab-btn.active {
-            background: rgba(0, 150, 255, 0.4); border-color: #00e5ff;
-        }
-
-        .checkbox-label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            font-size: 1.2rem;
-            cursor: pointer;
-            color: #ddd;
-            margin-top: 15px;
-        }
-        .checkbox-label input {
-            width: 20px; height: 20px;
-            cursor: pointer;
-        }
-
-        /* Overlay for preview */
-        #preview-overlay {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 3rem;
-            font-weight: bold;
-            color: #FFD700;
-            text-shadow: 0 0 20px rgba(0,0,0,0.8);
-            z-index: 50;
-            pointer-events: none;
-            display: none;
-        }
-
         @media (max-width: 600px) {
             h1 { font-size: 2.2rem; }
             #target-display { font-size: 2.2rem; }
             .bubble { width: 55px; height: 55px; font-size: 1.3rem; }
             .memory-grid { gap: 5px; }
-            .memory-card-front.symbol { font-size: 1.8rem; }
-            .memory-card-front.name { font-size: 1.1rem; }
+            .memory-card-front { font-size: 0.9rem; }
+            .memory-card-front.symbol { font-size: 1.5rem; }
+            .memory-card-front.name { font-size: 1rem; }
             #game2-stage-info { font-size: 1.5rem; }
-            .home-btn { top: 10px; left: 10px; width: 40px; height: 40px; font-size: 1.2rem; }
         }
     </style>
 </head>
@@ -444,24 +354,23 @@
         
         <div class="menu-grid">
             <div class="game-card g1" onclick="showScreen('screen-game1-start')">
-                <h2>🌟 별을 따는 원소술사</h2>
+                <h2>1. 별을 따는 원소술사</h2>
                 <p style="color:#aaa;">떨어지는 별 중에서 정답 기호를 잡아라!</p>
             </div>
             <div class="game-card g2" onclick="showScreen('screen-game2-start')">
-                <h2>🃏 기억의 원소술사</h2>
+                <h2>2. 기억의 원소술사</h2>
                 <p style="color:#aaa;">원소 이름과 기호 카드의 짝을 맞춰라!</p>
             </div>
         </div>
 
         <div style="margin-top: 30px;">
             <button class="btn" onclick="showScreen('screen-learn')">원소 기호 사전 📖</button>
-            <button class="btn" onclick="showScreen('screen-hof')">나의 기록 보기 🏆</button>
+            <button class="btn" onclick="showScreen('screen-hof')">명예의 전당 🏆 (게임1)</button>
         </div>
     </div>
 
     <!-- [APP] Learning Screen -->
     <div id="screen-learn" class="screen">
-        <button class="home-btn" onclick="showScreen('screen-main-menu')">🏠</button>
         <div class="panel" style="max-width: 800px; width: 95%;">
             <h2>원소 기호 사전 📖</h2>
             <p class="subtitle">게임을 시작하기 전에 30개의 원소 기호를 익혀보세요!</p>
@@ -470,14 +379,13 @@
                 <!-- Filled by JS -->
             </div>
             
-            <button class="btn" onclick="showScreen('screen-main-menu')">돌아가기</button>
+            <button class="btn" onclick="showScreen('screen-main-menu')">메인으로</button>
         </div>
     </div>
 
     <!-- [GAME 1] Start Screen -->
     <div id="screen-game1-start" class="screen">
-        <button class="home-btn" onclick="showScreen('screen-main-menu')">🏠</button>
-        <h2>🌟 별을 따는 원소술사</h2>
+        <h2>별을 따는 원소술사</h2>
         <p class="subtitle">제한시간 60초 안에 최대한 많은 원소를 모으세요.</p>
         
         <input type="text" id="nickname-input" class="input-field" placeholder="별명을 입력하세요" autocomplete="off" maxlength="15">
@@ -486,13 +394,14 @@
             <button class="btn primary" onclick="startGame1('easy')">쉬움 모드 시작</button>
             <button class="btn primary" onclick="startGame1('hard')">어려움 모드 시작</button>
         </div>
+        <div style="margin-top: 20px;">
+            <button class="btn" onclick="showScreen('screen-main-menu')">뒤로 가기</button>
+        </div>
     </div>
 
     <!-- [GAME 1] Play Screen -->
     <div id="screen-game1-play" class="screen">
-        <button class="home-btn" style="z-index:20;" onclick="showScreen('screen-main-menu')">🏠</button>
         <div id="game-ui">
-            <div style="width: 50px;"></div> <!-- Spacer for home btn -->
             <div id="score-display">점수: <span id="score">0</span></div>
             <div id="time-display">시간: <span id="time">60</span>s</div>
         </div>
@@ -502,7 +411,6 @@
 
     <!-- [GAME 1] Result Screen -->
     <div id="screen-game1-result" class="screen">
-        <button class="home-btn" onclick="showScreen('screen-main-menu')">🏠</button>
         <div class="panel">
             <h2>게임 종료!</h2>
             <h1 id="final-score" style="margin: 10px 0; color: #00bcd4;">0 점</h1>
@@ -520,64 +428,53 @@
             </div>
             
             <div style="margin-top: 20px;">
-                <button class="btn primary" onclick="saveScoreAndShowHoF()">기록 저장하기</button>
-                <button class="btn secondary" onclick="startGame1(currentMode)">재도전 하기</button>
+                <button class="btn primary" onclick="saveScoreAndShowHoF()">명예의 전당 등록</button>
+                <button class="btn" onclick="showScreen('screen-main-menu')">메인으로</button>
             </div>
         </div>
     </div>
 
-    <!-- [APP] Records (HoF) Screen -->
+    <!-- [GAME 1] Hall of Fame Screen -->
     <div id="screen-hof" class="screen">
-        <button class="home-btn" onclick="showScreen('screen-main-menu')">🏠</button>
-        <div class="panel" style="padding: 20px; max-width: 700px;">
+        <div class="panel" style="padding: 0; background: transparent; border: none;">
             <div id="hof-content">
-                <h2>🏆 나의 기록 보기 🏆</h2>
-                
-                <div class="tab-container">
-                    <button id="tab-g1" class="tab-btn active" onclick="switchTab('g1')">🌟 별을 따는 원소술사</button>
-                    <button id="tab-g2" class="tab-btn" onclick="switchTab('g2')">🃏 기억의 원소술사</button>
+                <h2>🏆 명예의 전당 🏆</h2>
+                <p style="margin-bottom: 20px; font-size: 0.9rem; color: #ccc;">올림픽 챔피언 원소술사들 (별 따기)</p>
+                <div id="hof-list">
+                    <!-- Ranks here -->
                 </div>
-
-                <div id="hof-list-g1" style="display:block;"></div>
-                <div id="hof-list-g2" style="display:none;"></div>
-                
                 <div style="margin-top: 20px; color:#888; font-size:0.8rem;">
                     * 기록은 현재 기기에만 저장됩니다.
                 </div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button class="btn" onclick="showScreen('screen-main-menu')">메인으로</button>
             </div>
         </div>
     </div>
 
     <!-- [GAME 2] Start Screen -->
     <div id="screen-game2-start" class="screen">
-        <button class="home-btn" onclick="showScreen('screen-main-menu')">🏠</button>
-        <h2>🃏 기억의 원소술사</h2>
-        <p class="subtitle">시작 전 5초 동안 카드의 위치를 보여줍니다.<br>가장 빠르게 짝을 맞춰보세요!</p>
+        <h2>기억의 원소술사</h2>
+        <p class="subtitle">원소 기호와 이름 카드의 짝을 맞추어 보세요.<br>총 3개의 단계로 진행됩니다.</p>
         
-        <input type="text" id="nickname-input-g2" class="input-field" placeholder="별명을 입력하세요" autocomplete="off" maxlength="15">
-        
-        <label class="checkbox-label">
-            <input type="checkbox" id="g2-hint-mode">
-            💡 힌트 모드 켜기 (기호와 이름 카드 뒷면 색상 다름)
-        </label>
-
-        <div style="margin-top: 30px;">
-            <button class="btn secondary" style="font-size: 1.2rem; padding: 15px 30px;" onclick="startGame2(1)">1단계 (3x4)</button>
-            <button class="btn secondary" style="font-size: 1.2rem; padding: 15px 30px;" onclick="startGame2(2)">2단계 (4x4)</button>
-            <button class="btn secondary" style="font-size: 1.2rem; padding: 15px 30px;" onclick="startGame2(3)">3단계 (6x4)</button>
+        <div style="margin-top: 20px;">
+            <button class="btn secondary" style="font-size: 1.5rem; padding: 15px 40px;" onclick="startGame2(1)">도전 시작!</button>
+        </div>
+        <div style="margin-top: 20px;">
+            <button class="btn" onclick="showScreen('screen-main-menu')">뒤로 가기</button>
         </div>
     </div>
 
     <!-- [GAME 2] Play Screen -->
     <div id="screen-game2-play" class="screen">
-        <button class="home-btn" style="z-index: 100;" onclick="showScreen('screen-main-menu')">🏠</button>
         <div class="memory-game-header">
-            <div id="game2-stage-info">1단계 (3x4)</div>
-            <div id="game2-timer">0.0초</div>
+            <div id="game2-stage-info">1단계 (4x4)</div>
+            <div id="game2-matches-info">찾은 쌍: 0 / 8</div>
         </div>
-        <div id="preview-overlay">외우세요! 5</div>
         <div class="memory-grid-container">
-            <div id="memory-grid" class="memory-grid">
+            <div id="memory-grid" class="memory-grid cols-4">
                 <!-- Cards injected here -->
             </div>
         </div>
@@ -585,63 +482,18 @@
 
     <!-- [GAME 2] Result Screen -->
     <div id="screen-game2-result" class="screen">
-        <button class="home-btn" onclick="showScreen('screen-main-menu')">🏠</button>
         <div class="panel">
             <h2 id="g2-result-title">단계 클리어!</h2>
-            <h1 id="g2-result-time" style="color: #00e5ff; font-family: monospace; font-size: 3rem;">0.0초</h1>
             <p id="g2-result-desc" class="subtitle">모든 원소의 짝을 찾았습니다!</p>
             
-            <div style="margin-top: 30px; display: flex; flex-direction: column; gap: 10px; align-items: center;">
-                <button class="btn primary" onclick="saveRecordG2()">기록 저장하기</button>
-                <div style="display: flex; gap: 10px;">
-                    <button class="btn secondary" onclick="startGame2(g2CurrentStage)">다시 하기 (새 원소)</button>
-                    <button id="g2-next-btn" class="btn secondary" onclick="startGame2(g2CurrentStage + 1)">다음 단계로</button>
-                </div>
+            <div style="margin-top: 30px;">
+                <button id="g2-next-btn" class="btn secondary" onclick="startGame2(g2CurrentStage + 1)">다음 단계로</button>
+                <button class="btn" onclick="showScreen('screen-main-menu')">메인으로</button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- Web Audio API for Sound Effects ---
-        let audioCtx;
-        function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-        }
-        
-        function playSound(type) {
-            if (!audioCtx) return;
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            
-            if (type === 'correct') {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
-                osc.frequency.exponentialRampToValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
-                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.5);
-            } else if (type === 'wrong') {
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.3);
-            }
-        }
-
-        // Add event listeners to initialize audio on first click anywhere
-        document.body.addEventListener('click', initAudio, { once: true });
-        document.body.addEventListener('touchstart', initAudio, { once: true });
-
         // --- Data (Exactly 30 Elements) ---
         const elementsData = [
             { symbol: 'H', name: '수소' }, { symbol: 'He', name: '헬륨' }, { symbol: 'Li', name: '리튬' },
@@ -705,9 +557,8 @@
 
         // --- Screen Management ---
         function showScreen(screenId) {
-            // Clean up intervals
+            // Clean up game1 if running
             clearInterval(gameInterval);
-            clearInterval(g2TimerInterval);
             cancelAnimationFrame(animationFrameId);
 
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -759,7 +610,7 @@
 
         function startGame1(mode) {
             const nameInput = document.getElementById('nickname-input').value.trim();
-            if (nameInput) playerNickname = nameInput;
+            playerNickname = nameInput ? nameInput : '이름 없는 원소술사';
 
             currentMode = mode;
             score = 0;
@@ -792,7 +643,6 @@
         function endGame1() {
             clearInterval(gameInterval);
             cancelAnimationFrame(animationFrameId);
-            playSound('correct'); // end sound
             
             document.getElementById('final-score').innerText = `${score} 점`;
             const modeText = currentMode === 'easy' ? '쉬움 모드' : '어려움 모드';
@@ -891,7 +741,6 @@
             feedback.style.top = `${clickY}px`;
 
             if (bubbleObj.data.symbol === targetElement.symbol) {
-                playSound('correct');
                 const points = currentMode === 'hard' ? 2 : 1;
                 score += points;
                 feedback.innerText = `+${points}`;
@@ -902,7 +751,6 @@
                 }
                 setTimeout(nextQuestion1, 100);
             } else {
-                playSound('wrong');
                 score -= 1;
                 feedback.innerText = '-1';
                 feedback.classList.add('wrong');
@@ -954,13 +802,67 @@
             }
         }
 
+        // Game 1 HoF
+        const HOF_KEY = 'element_game_hof';
+        function saveScoreAndShowHoF() {
+            const records = JSON.parse(localStorage.getItem(HOF_KEY) || '[]');
+            const newRecord = {
+                nickname: playerNickname,
+                score: score,
+                mode: currentMode === 'easy' ? '쉬움' : '어려움',
+                date: new Date().toLocaleDateString('ko-KR')
+            };
+            records.push(newRecord);
+            records.sort((a, b) => b.score - a.score);
+            const topRecords = records.slice(0, 10);
+            localStorage.setItem(HOF_KEY, JSON.stringify(topRecords));
+            showScreen('screen-hof');
+        }
+        function renderHoF() {
+            const listDiv = document.getElementById('hof-list');
+            listDiv.innerHTML = '';
+            const records = JSON.parse(localStorage.getItem(HOF_KEY) || '[]');
+            
+            if (records.length === 0) {
+                listDiv.innerHTML = '<div style="padding: 20px;">아직 등록된 기록이 없습니다.</div>';
+                return;
+            }
+
+            records.forEach((record, index) => {
+                const div = document.createElement('div');
+                div.className = `rank-item ${index < 3 ? 'rank-' + (index + 1) : ''}`;
+                
+                let medalStr = `${index + 1}위`;
+                if (index === 0) medalStr = '<span class="medal">🥇</span>';
+                else if (index === 1) medalStr = '<span class="medal">🥈</span>';
+                else if (index === 2) medalStr = '<span class="medal">🥉</span>';
+                
+                const displayName = record.nickname || '이름 없는 원소술사';
+
+                div.innerHTML = `
+                    <div style="display:flex; align-items:center;">
+                        ${medalStr}
+                        <div style="margin-left:10px;">
+                            <span style="font-weight:bold;">${displayName}</span>
+                            <span style="color: #00bcd4; font-weight:bold; margin-left: 5px;">${record.score} 점</span>
+                        </div>
+                    </div>
+                    <div style="font-size:0.9rem; color:#aaa;">
+                        [${record.mode}] ${record.date}
+                    </div>
+                `;
+                listDiv.appendChild(div);
+            });
+        }
+
+
         // ==========================================
         // GAME 2: 기억의 원소술사 (Memory Card Match)
         // ==========================================
         const GAME2_STAGES = [
-            { level: 1, name: '1단계 (3x4)', cols: 4, rows: 3, pairs: 6 },  // 12 cards
-            { level: 2, name: '2단계 (4x4)', cols: 4, rows: 4, pairs: 8 },  // 16 cards
-            { level: 3, name: '3단계 (6x4)', cols: 6, rows: 4, pairs: 12 }  // 24 cards
+            { level: 1, name: '1단계 (4x4)', cols: 4, pairs: 8 },  // 16 cards
+            { level: 2, name: '2단계 (4x5)', cols: 4, pairs: 10 }, // 20 cards (wait, 4x5 or 5x4 layout. Using 4 columns for 20 cards works)
+            { level: 3, name: '3단계 (6x6)', cols: 6, pairs: 18 }  // 36 cards
         ];
 
         let g2CurrentStage = 1;
@@ -968,23 +870,15 @@
         let g2FlippedIndices = [];
         let g2MatchedPairs = 0;
         let g2IsAnimating = false;
-        
-        let g2StartTime = 0;
-        let g2TimerInterval = null;
-        let g2FinalTime = 0;
 
         function startGame2(stageLevel) {
-            const nameInput = document.getElementById('nickname-input-g2').value.trim();
-            if (nameInput) playerNickname = nameInput;
-
             g2CurrentStage = stageLevel;
             const stageConfig = GAME2_STAGES[stageLevel - 1];
             
             if (!stageConfig) {
                 // Game completely cleared
                 document.getElementById('g2-result-title').innerText = "🎉 아카데미 졸업! 🎉";
-                document.getElementById('g2-result-time').innerText = "모든 단계 완료!";
-                document.getElementById('g2-result-desc').innerText = "최고의 기억술사로 인정합니다!";
+                document.getElementById('g2-result-desc').innerText = "모든 기억의 원소술사 단계를 완벽하게 클리어하셨습니다!";
                 document.getElementById('g2-next-btn').style.display = 'none';
                 showScreen('screen-game2-result');
                 return;
@@ -992,15 +886,16 @@
 
             // Setup UI
             document.getElementById('game2-stage-info').innerText = stageConfig.name;
-            document.getElementById('game2-timer').innerText = "0.0초";
             g2MatchedPairs = 0;
-            
-            const hintMode = document.getElementById('g2-hint-mode').checked;
+            updateG2MatchesInfo();
+            showScreen('screen-game2-play');
+
+            // Generate Cards
             const grid = document.getElementById('memory-grid');
-            grid.className = `memory-grid cols-${stageConfig.cols} rows-${stageConfig.rows} ${hintMode ? 'hint-mode' : ''}`;
+            grid.className = `memory-grid cols-${stageConfig.cols}`;
             grid.innerHTML = '';
 
-            // Randomly select elements for this stage (new random every time)
+            // Randomly select elements for this stage
             let shuffledElements = [...elementsData].sort(() => Math.random() - 0.5);
             let selectedElements = shuffledElements.slice(0, stageConfig.pairs);
 
@@ -1015,11 +910,8 @@
 
             // Render cards
             g2Cards.forEach((card, index) => {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'memory-card-wrapper';
-
                 const cardEl = document.createElement('div');
-                cardEl.className = 'memory-card flipped'; // Start flipped for preview
+                cardEl.className = 'memory-card';
                 cardEl.dataset.index = index;
                 
                 const cardFront = document.createElement('div');
@@ -1027,54 +919,22 @@
                 cardFront.innerText = card.value;
                 
                 const cardBack = document.createElement('div');
-                cardBack.className = `memory-card-back type-${card.type}`; // Used for hint mode
+                cardBack.className = 'memory-card-back';
                 
                 cardEl.appendChild(cardFront);
                 cardEl.appendChild(cardBack);
                 
                 cardEl.addEventListener('click', () => handleCardClick(index));
-                
-                wrapper.appendChild(cardEl);
-                grid.appendChild(wrapper);
+                grid.appendChild(cardEl);
             });
 
             g2FlippedIndices = [];
-            g2IsAnimating = true; // Lock clicks during preview
-            
-            showScreen('screen-game2-play');
-            startG2Preview();
+            g2IsAnimating = false;
         }
 
-        function startG2Preview() {
-            const overlay = document.getElementById('preview-overlay');
-            overlay.style.display = 'block';
-            let countdown = 5;
-            overlay.innerText = `외우세요! ${countdown}`;
-
-            const tick = setInterval(() => {
-                countdown--;
-                if (countdown > 0) {
-                    overlay.innerText = `외우세요! ${countdown}`;
-                } else {
-                    clearInterval(tick);
-                    overlay.style.display = 'none';
-                    
-                    // Unflip all cards
-                    document.querySelectorAll('.memory-card').forEach(c => c.classList.remove('flipped'));
-                    
-                    // Start timer after flip animation completes
-                    setTimeout(() => {
-                        g2IsAnimating = false;
-                        g2StartTime = Date.now();
-                        g2TimerInterval = setInterval(updateG2Timer, 100);
-                    }, 500);
-                }
-            }, 1000);
-        }
-
-        function updateG2Timer() {
-            const elapsed = (Date.now() - g2StartTime) / 1000;
-            document.getElementById('game2-timer').innerText = elapsed.toFixed(1) + "초";
+        function updateG2MatchesInfo() {
+            const stageConfig = GAME2_STAGES[g2CurrentStage - 1];
+            document.getElementById('game2-matches-info').innerText = `찾은 쌍: ${g2MatchedPairs} / ${stageConfig.pairs}`;
         }
 
         function handleCardClick(index) {
@@ -1105,7 +965,6 @@
 
             if (card1.elementId === card2.elementId) {
                 // Match!
-                playSound('correct');
                 setTimeout(() => {
                     el1.classList.add('matched');
                     el2.classList.add('matched');
@@ -1113,17 +972,18 @@
                     el2.querySelector('.memory-card-front').classList.add('matched');
                     
                     g2MatchedPairs++;
+                    updateG2MatchesInfo();
+                    
                     g2FlippedIndices = [];
                     g2IsAnimating = false;
 
                     const stageConfig = GAME2_STAGES[g2CurrentStage - 1];
                     if (g2MatchedPairs === stageConfig.pairs) {
-                        setTimeout(() => endG2Stage(), 500);
+                        setTimeout(() => endG2Stage(), 800);
                     }
                 }, 400); // Wait for flip animation
             } else {
                 // Not a match, flip back
-                playSound('wrong');
                 setTimeout(() => {
                     el1.classList.remove('flipped');
                     el2.classList.remove('flipped');
@@ -1134,114 +994,18 @@
         }
 
         function endG2Stage() {
-            clearInterval(g2TimerInterval);
-            g2FinalTime = ((Date.now() - g2StartTime) / 1000).toFixed(1);
-            playSound('correct'); // end fanfare
-
             document.getElementById('g2-result-title').innerText = `${g2CurrentStage}단계 클리어!`;
-            document.getElementById('g2-result-time').innerText = `${g2FinalTime}초`;
             document.getElementById('g2-result-desc').innerText = "모든 원소의 짝을 찾았습니다!";
             document.getElementById('g2-next-btn').style.display = 'inline-block';
             showScreen('screen-game2-result');
         }
 
-        // ==========================================
-        // Hall of Fame (나의 기록 보기) 통합
-        // ==========================================
-        const HOF_KEY_G1 = 'element_game_hof_g1';
-        const HOF_KEY_G2 = 'element_game_hof_g2';
-
-        function saveScoreAndShowHoF() { // Game 1
-            const records = JSON.parse(localStorage.getItem(HOF_KEY_G1) || '[]');
-            const newRecord = {
-                nickname: playerNickname,
-                score: score,
-                mode: currentMode === 'easy' ? '쉬움' : '어려움',
-                date: new Date().toLocaleDateString('ko-KR')
-            };
-            records.push(newRecord);
-            records.sort((a, b) => b.score - a.score); // Highest score first
-            localStorage.setItem(HOF_KEY_G1, JSON.stringify(records.slice(0, 10)));
-            showScreen('screen-hof');
-            switchTab('g1');
-        }
-
-        function saveRecordG2() { // Game 2
-            const records = JSON.parse(localStorage.getItem(HOF_KEY_G2) || '[]');
-            const stageConfig = GAME2_STAGES[g2CurrentStage - 1];
-            const newRecord = {
-                nickname: playerNickname,
-                time: parseFloat(g2FinalTime),
-                stage: stageConfig.name,
-                date: new Date().toLocaleDateString('ko-KR')
-            };
-            records.push(newRecord);
-            records.sort((a, b) => a.time - b.time); // Lowest time first
-            localStorage.setItem(HOF_KEY_G2, JSON.stringify(records.slice(0, 10)));
-            showScreen('screen-hof');
-            switchTab('g2');
-        }
-
-        function switchTab(tab) {
-            document.getElementById('tab-g1').classList.remove('active');
-            document.getElementById('tab-g2').classList.remove('active');
-            document.getElementById('hof-list-g1').style.display = 'none';
-            document.getElementById('hof-list-g2').style.display = 'none';
-
-            document.getElementById(`tab-${tab}`).classList.add('active');
-            document.getElementById(`hof-list-${tab}`).style.display = 'block';
-        }
-
-        function renderHoF() {
-            // Render G1
-            const listG1 = document.getElementById('hof-list-g1');
-            listG1.innerHTML = '';
-            const recG1 = JSON.parse(localStorage.getItem(HOF_KEY_G1) || '[]');
-            if (recG1.length === 0) listG1.innerHTML = '<div style="padding: 20px;">기록이 없습니다.</div>';
-            recG1.forEach((record, i) => {
-                const div = document.createElement('div');
-                div.className = `rank-item ${i < 3 ? 'rank-' + (i + 1) : ''}`;
-                let medalStr = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}위`;
-                div.innerHTML = `
-                    <div style="display:flex; align-items:center;">
-                        <span class="medal">${medalStr}</span>
-                        <div style="margin-left:10px;">
-                            <span style="font-weight:bold;">${record.nickname}</span>
-                            <span style="color: #00bcd4; font-weight:bold; margin-left: 5px;">${record.score} 점</span>
-                        </div>
-                    </div>
-                    <div style="font-size:0.9rem; color:#aaa;">[${record.mode}] ${record.date}</div>
-                `;
-                listG1.appendChild(div);
-            });
-
-            // Render G2
-            const listG2 = document.getElementById('hof-list-g2');
-            listG2.innerHTML = '';
-            const recG2 = JSON.parse(localStorage.getItem(HOF_KEY_G2) || '[]');
-            if (recG2.length === 0) listG2.innerHTML = '<div style="padding: 20px;">기록이 없습니다.</div>';
-            recG2.forEach((record, i) => {
-                const div = document.createElement('div');
-                div.className = `rank-item ${i < 3 ? 'rank-' + (i + 1) : ''}`;
-                let medalStr = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}위`;
-                div.innerHTML = `
-                    <div style="display:flex; align-items:center;">
-                        <span class="medal">${medalStr}</span>
-                        <div style="margin-left:10px;">
-                            <span style="font-weight:bold;">${record.nickname}</span>
-                            <span style="color: #00e5ff; font-weight:bold; margin-left: 5px;">${record.time.toFixed(1)}초</span>
-                        </div>
-                    </div>
-                    <div style="font-size:0.9rem; color:#aaa;">[${record.stage}] ${record.date}</div>
-                `;
-                listG2.appendChild(div);
-            });
-        }
-
         // --- PWA Service Worker Registration ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(err => {
+                navigator.serviceWorker.register('./sw.js').then(registration => {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }).catch(err => {
                     console.log('ServiceWorker registration failed: ', err);
                 });
             });
@@ -1249,3 +1013,7 @@
     </script>
 </body>
 </html>
+"""
+
+with open("index.html", "w", encoding="utf-8") as f:
+    f.write(html_content)
